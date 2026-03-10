@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Uneven Playing Field – Rehab Challenge</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#2f2f2f;
+color:white;
+text-align:center;
+padding:30px;
+}
+
+h1{color:#b388ff;}
+
+.screen{
+background:#444;
+padding:30px;
+border-radius:12px;
+max-width:800px;
+margin:auto;
+}
+
+.profile{
+background:#444;
+padding:20px;
+border-radius:10px;
+max-width:800px;
+margin:auto;
+margin-bottom:20px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:15px;
+max-width:900px;
+margin:auto;
+}
+
+.card{
+background:#666;
+padding:15px;
+border-radius:10px;
+cursor:pointer;
+}
+
+.selected{
+background:#b388ff;
+color:black;
+}
+
+button{
+margin-top:20px;
+padding:12px 25px;
+border:none;
+border-radius:8px;
+background:#b388ff;
+font-size:16px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="startScreen" class="screen">
+
+<h1>Uneven Playing Field</h1>
+
+<h2>Rehab Challenge</h2>
+
+<p>
+Each round you will be given an athlete profile including their injury,
+asymmetry and performance goal.
+</p>
+
+<p><b>Your task:</b></p>
+
+<p>
+Select the rehabilitation exercises that would best help the athlete.
+</p>
+
+<p>
+• You have <b>45 seconds</b> per athlete  
+<br>
+• Select the exercises you think are correct  
+<br>
+• Correct answers = +1 point  
+<br>
+• Incorrect answers = −1 point
+</p>
+
+<button onclick="startGame()">Start Game</button>
+
+</div>
+
+
+<div id="gameArea" style="display:none">
+
+<h1>Uneven Playing Field</h1>
+
+<div class="profile">
+<h3 id="profileName"></h3>
+<p id="profileInfo"></p>
+<p><b>Goal:</b> <span id="profileGoal"></span></p>
+</div>
+
+<h2 id="timer">45</h2>
+
+<div id="cards" class="cards"></div>
+
+<button onclick="submitAnswer()">Submit</button>
+
+<p id="result"></p>
+<p id="correct"></p>
+<p id="explanation"></p>
+
+</div>
+
+<script>
+
+const profiles=[
+
+{
+name:"Football Player",
+info:"Quad asymmetry 18% | Injury: None",
+goal:"Improve performance",
+options:["Scapular Stability","Single Arm Dumbbell Press","Single Leg Box Jumps","Plyometrics","Bulgarian Split Squats"],
+correct:["Single Leg Box Jumps","Plyometrics","Bulgarian Split Squats"],
+explanation:"Explosive unilateral exercises improve lower limb power."
+},
+
+{
+name:"Tennis Player",
+info:"Upper limb asymmetry 19% | Injury: Tennis elbow",
+goal:"Return to play",
+options:["Single-arm Cable Row","Eccentric Wrist Extensions","Scapular Stability","RDLs","Single Arm Dumbbell Press"],
+correct:["Single-arm Cable Row","Eccentric Wrist Extensions","Scapular Stability"],
+explanation:"Forearm and shoulder stabilisation protects the elbow."
+},
+
+{
+name:"Marathon Runner",
+info:"Hamstring asymmetry 16%",
+goal:"Optimise performance",
+options:["Single-leg Bounding","Back Squats","Maximal Sprints","Hamstring Curls","VO2 Max"],
+correct:["Hamstring Curls","Back Squats"],
+explanation:"Strengthening hamstrings improves running economy."
+},
+
+{
+name:"Amputee",
+info:"Quad asymmetry 24%",
+goal:"Improve gait",
+options:["Sit to Stand","Incline Walking","Glute Bridge","Treadmill Walking","Side Plank"],
+correct:["Sit to Stand","Incline Walking","Glute Bridge","Treadmill Walking"],
+explanation:"Functional strength improves walking ability."
+},
+
+{
+name:"Stroke Survivor",
+info:"Lower limb asymmetry 8% | Foot ulcer",
+goal:"Improve gait",
+options:["Resistance Band Exercises","Sit to Stand","Treadmill Walking","Step-ups","Dumbbell Curls"],
+correct:["Resistance Band Exercises","Sit to Stand","Step-ups"],
+explanation:"Functional strengthening improves gait."
+},
+
+{
+name:"87-Year-Old Woman",
+info:"Lower limb asymmetry 12% | Wrist fracture",
+goal:"Reduce falls",
+options:["Sit to Stand","Single Leg Balance","Step-ups","Box Jumps","New Footwear"],
+correct:["Sit to Stand","Single Leg Balance","Step-ups"],
+explanation:"Balance and functional strength reduce fall risk."
+},
+
+{
+name:"Elite Road Cyclist",
+info:"Quad asymmetry 3%",
+goal:"Improve sprint power",
+options:["Back Squats","Interval Training","Drop Jump","Single Leg Bounding","No Training Required"],
+correct:["Back Squats","Interval Training","Drop Jump"],
+explanation:"Strength and explosive training improves sprint power."
+},
+
+{
+name:"Youth Footballer (14)",
+info:"Lower limb asymmetry 14%",
+goal:"Prevent first injury",
+options:["Spanish Squats","Submaximal Sprints","Education","5-10-5 Agility Drill","Interval Training"],
+correct:["Spanish Squats","Submaximal Sprints","Education"],
+explanation:"Strength and education reduce injury risk."
+},
+
+{
+name:"Male Sprinter",
+info:"Hamstring asymmetry 15% | Hamstring tear",
+goal:"Return to maximal sprinting",
+options:["Spanish Squats","Submaximal Sprints","Maximal Sprints","Interval Training","Increase Training Volume"],
+correct:["Spanish Squats","Submaximal Sprints"],
+explanation:"Gradual loading protects healing hamstrings."
+},
+
+{
+name:"Recreational Runner",
+info:"Quad asymmetry 11% | Patellofemoral pain",
+goal:"Reduce knee pain",
+options:["Gait Analysis","New Footwear","Leg Extensions","Box Jumps","1 Rep Max"],
+correct:["Gait Analysis","New Footwear"],
+explanation:"Biomechanics adjustments reduce knee stress."
+},
+
+{
+name:"Para Long Jumper",
+info:"Quad asymmetry 21%",
+goal:"Optimise take-off",
+options:["Short Approach Jumps","Single Leg Balance","Drop Jump","Maximal Sprints","Submaximal Sprints"],
+correct:["Short Approach Jumps","Single Leg Balance"],
+explanation:"Balance and controlled jumps improve take-off mechanics."
+},
+
+{
+name:"Gym Enthusiast",
+info:"Bicep asymmetry 12% | Lower back pain",
+goal:"Improve physique",
+options:["Scapular Stability","Side Plank","Back Squat","VO2 Max Test","Education"],
+correct:["Scapular Stability","Side Plank"],
+explanation:"Core stability improves movement quality."
+},
+
+{
+name:"Office Worker",
+info:"Hip asymmetry 14% | Lower back pain",
+goal:"Reduce pain",
+options:["Glute Bridge","Education","Lateral Band Walks","5-10-5 Agility Drill","No Training Required"],
+correct:["Glute Bridge","Education","Lateral Band Walks"],
+explanation:"Glute activation reduces lumbar stress."
+},
+
+{
+name:"Elite Skier",
+info:"Quad asymmetry 7% | ACL tear (2 years ago)",
+goal:"Reduce reinjury risk",
+options:["Video Analysis","Drop Jump","1 Rep Max","Drift Protocol","New Footwear"],
+correct:["Video Analysis","Drop Jump"],
+explanation:"Movement analysis and plyometrics improve control."
+},
+
+{
+name:"CrossFit Athlete",
+info:"Shoulder asymmetry 11% | Shoulder dislocation",
+goal:"Improve PB",
+options:["Scapular Stability","Interval Training","Gait Analysis","Plyometrics","VO2 Max Test"],
+correct:["Scapular Stability"],
+explanation:"Shoulder stability must be restored before heavy lifts."
+},
+
+{
+name:"Trail Runner",
+info:"Calf asymmetry 18% | Severe ankle sprain",
+goal:"Return to play",
+options:["Single Leg Balance","Resistance Band Training","Gait Analysis","Leg Press","Bodyweight Squats"],
+correct:["Single Leg Balance","Resistance Band Training","Gait Analysis"],
+explanation:"Balance and ankle strength restore stability."
+},
+
+{
+name:"General Athlete",
+info:"Lower limb asymmetry 10%",
+goal:"Improve symmetry",
+options:["Single Leg Squats","Balance Training","Plyometrics","VO2 Max Test","Bench Press"],
+correct:["Single Leg Squats","Balance Training"],
+explanation:"Unilateral strength improves symmetry."
+}
+
+];
+
+let profileIndex=0;
+let selected=[];
+let timeLeft;
+let timer;
+
+function startGame(){
+
+document.getElementById("startScreen").style.display="none";
+document.getElementById("gameArea").style.display="block";
+
+loadProfile();
+
+}
+
+function loadProfile(){
+
+selected=[];
+timeLeft=45;
+
+clearInterval(timer);
+
+document.getElementById("result").innerText="";
+document.getElementById("correct").innerText="";
+document.getElementById("explanation").innerText="";
+
+const profile=profiles[profileIndex];
+
+document.getElementById("profileName").innerText=profile.name;
+document.getElementById("profileInfo").innerText=profile.info;
+document.getElementById("profileGoal").innerText=profile.goal;
+
+const container=document.getElementById("cards");
+container.innerHTML="";
+
+profile.options.forEach(option=>{
+
+let div=document.createElement("div");
+div.className="card";
+div.innerText=option;
+
+div.onclick=function(){
+
+if(selected.includes(option)){
+selected=selected.filter(o=>o!==option);
+div.classList.remove("selected");
+}else{
+selected.push(option);
+div.classList.add("selected");
+}
+
+};
+
+container.appendChild(div);
+
+});
+
+timer=setInterval(()=>{
+
+timeLeft--;
+document.getElementById("timer").innerText=timeLeft;
+
+if(timeLeft<=0){
+submitAnswer();
+}
+
+},1000);
+
+}
+
+function submitAnswer(){
+
+clearInterval(timer);
+
+const profile=profiles[profileIndex];
+
+let score=0;
+
+selected.forEach(choice=>{
+if(profile.correct.includes(choice)){score++;}
+else{score--;}
+});
+
+document.getElementById("result").innerText="Score: "+score;
+document.getElementById("correct").innerText="Correct answers: "+profile.correct.join(", ");
+document.getElementById("explanation").innerText=profile.explanation;
+
+setTimeout(nextProfile,5000);
+
+}
+
+function nextProfile(){
+
+profileIndex++;
+
+if(profileIndex>=profiles.length){
+profileIndex=0;
+}
+
+loadProfile();
+
+}
+
+</script>
+
+</body>
+</html>
